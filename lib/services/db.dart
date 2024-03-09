@@ -60,6 +60,15 @@ class DatabaseHelper {
             FOREIGN KEY (receiver_id) REFERENCES user (user_id)
           )
         ''');
+
+        await db.execute('''
+          CREATE TABLE post (
+            post_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            post TEXT,
+            FOREIGN KEY (user_id) REFERENCES user (user_id),
+          )
+        ''');
       },
     );
   }
@@ -69,6 +78,13 @@ class DatabaseHelper {
     final db = await database;
     await db.insert('user', userData);
   }
+
+  //Ajout d'un post
+  Future<void> insertPost(Map<String, dynamic> postData) async {
+    final db = await database;
+    await db.insert('post', postData);
+  }
+
 
   // Ajout d'un ami
   Future<void> addFriend(int user1Id, int user2Id) async {
@@ -253,11 +269,13 @@ class DatabaseHelper {
     SELECT user.*, MAX(message.timestamp) AS last_message_timestamp
     FROM user
     INNER JOIN message ON user.user_id = message.sender_id OR user.user_id = message.receiver_id
-    WHERE message.sender_id = ? OR message.receiver_id = ?
+    WHERE (message.sender_id = ? OR message.receiver_id = ?)
+      AND user.user_id != ?
     GROUP BY user.user_id
     ORDER BY last_message_timestamp DESC
-  ''', [userId, userId]);
+  ''', [userId, userId, userId]);
   }
+
 
   //uttilisateur connecté
   Future<Map<String, dynamic>?> getLoggedInUser(int userId) async {
