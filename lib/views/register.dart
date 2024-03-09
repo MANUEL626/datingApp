@@ -12,34 +12,13 @@ class _RegistrationPageState extends State<RegistrationPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+  TextEditingController();
 
   bool showPassword = false;
   bool showConfirmPassword = false;
 
-  late final Map<String, String> _user;
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>(); // Ajout de la clé globale
-
-  String? validateEmail(String? value) {
-    if (value == null || !value.contains('@') || !value.contains('.')) {
-      return 'Veuillez entrer une adresse e-mail valide';
-    }
-    return null;
-  }
-
-  String? validateUsername(String? value) {
-    if (value == null || value.isEmpty || value.length < 3) {
-      return 'Le nom d\'utilisateur doit contenir au moins 3 caractères';
-    }
-    return null;
-  }
-
-  String? validatePassword(String? value) {
-    if (value == null || value.isEmpty || value.length < 7) {
-      return 'Le mot de passe doit contenir au moins 7 caractères';
-    }
-    return null;
-  }
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -49,9 +28,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView( // Utilise un SingleChildScrollView
+        child: SingleChildScrollView(
           child: Form(
-            key: _formKey, // Associez la clé du formulaire
+            key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -118,20 +97,35 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 SizedBox(height: 16.0),
                 ElevatedButton(
                   onPressed: () async {
-                    if (_formKey.currentState!.validate()) { // Utilisez la clé globale pour valider le formulaire
+                    if (_formKey.currentState!.validate()) {
                       String email = emailController.text;
                       String username = usernameController.text;
                       String password = passwordController.text;
-                      _user = {
-                        'username': username,
-                        'mail': email,
-                        'password': password
-                      };
-                      await dbHelper.insertUser(_user);
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => LoginPage()),
-                      );
+                      if (await _itemMailExists(email)) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Cet e-mail est déjà associé à un compte.'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      } else if (await _itemNameExists(username)) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Ce nom d\'utilisateur est déjà pris.'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      } else {
+                        await dbHelper.insertUser({
+                          'username': username,
+                          'mail': email,
+                          'password': password,
+                        });
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => LoginPage()),
+                        );
+                      }
                     }
                   },
                   child: Text('S\'inscrire'),
@@ -142,5 +136,36 @@ class _RegistrationPageState extends State<RegistrationPage> {
         ),
       ),
     );
+  }
+
+  Future<bool> _itemMailExists(String email) async {
+    final users = await dbHelper.getUsers();
+    return users.any((item) => item['mail'] == email);
+  }
+
+  Future<bool> _itemNameExists(String name) async {
+    final users = await dbHelper.getUsers();
+    return users.any((item) => item['username'] == name);
+  }
+
+  String? validateEmail(String? value) {
+    if (value == null || value.isEmpty || !value.contains('@') || !value.contains('.')) {
+      return 'Veuillez entrer une adresse e-mail valide';
+    }
+    return null;
+  }
+
+  String? validateUsername(String? value) {
+    if (value == null || value.isEmpty || value.length < 3 || value.contains(' ')) {
+      return 'Le nom d\'utilisateur doit contenir au moins 3 caractères et ne doit pas contenir d\'espace';
+    }
+    return null;
+  }
+
+  String? validatePassword(String? value) {
+    if (value == null || value.isEmpty || value.length < 7) {
+      return 'Le mot de passe doit contenir au moins 7 caractères';
+    }
+    return null;
   }
 }
