@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../var.dart';
 import 'login.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import 'starting.dart';
 
 class RegistrationPage extends StatefulWidget {
@@ -14,6 +16,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
   TextEditingController();
+
+  final ImagePicker _imagePicker = ImagePicker();
+  File? _selectedImage;
+  String text = '';
 
   bool showPassword = false;
   bool showConfirmPassword = false;
@@ -58,9 +64,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   decoration: InputDecoration(
                     labelText: 'Mot de passe',
                     suffixIcon: IconButton(
-                      icon: Icon(
-                        showPassword ? Icons.visibility : Icons.visibility_off,
-                      ),
+                      icon: Icon(showPassword
+                          ? Icons.visibility
+                          : Icons.visibility_off),
                       onPressed: () {
                         setState(() {
                           showPassword = !showPassword;
@@ -77,9 +83,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   decoration: InputDecoration(
                     labelText: 'Confirmer le mot de passe',
                     suffixIcon: IconButton(
-                      icon: Icon(
-                        showConfirmPassword ? Icons.visibility : Icons.visibility_off,
-                      ),
+                      icon: Icon(showConfirmPassword
+                          ? Icons.visibility
+                          : Icons.visibility_off),
                       onPressed: () {
                         setState(() {
                           showConfirmPassword = !showConfirmPassword;
@@ -96,38 +102,23 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 ),
                 SizedBox(height: 16.0),
                 ElevatedButton(
-                  onPressed: () async {
-                    if (_formKey.currentState!.validate()) {
-                      String email = emailController.text;
-                      String username = usernameController.text;
-                      String password = passwordController.text;
-                      if (await _itemMailExists(email)) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Cet e-mail est déjà associé à un compte.'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      } else if (await _itemNameExists(username)) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Ce nom d\'utilisateur est déjà pris.'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      } else {
-                        await dbHelper.insertUser({
-                          'username': username,
-                          'mail': email,
-                          'password': password,
-                        });
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => LoginPage()),
-                        );
-                      }
-                    }
-                  },
+                  onPressed: _showImageSourceDialog,
+                  child: Text('Sélectionner une image'),
+                ),
+                _selectedImage != null
+                    ? Image.file(_selectedImage!)
+                    : Column(
+                  children: [
+                    Text(
+                      text,
+                      style: TextStyle(color: Colors.red),
+                    ),
+                    SizedBox(height: 10),
+                  ],
+                ),
+                SizedBox(height: 16.0),
+                ElevatedButton(
+                  onPressed: _registerUser,
                   child: Text('S\'inscrire'),
                 ),
               ],
@@ -136,6 +127,45 @@ class _RegistrationPageState extends State<RegistrationPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _registerUser() async {
+    if (_formKey.currentState!.validate()) {
+      String email = emailController.text;
+      String username = usernameController.text;
+      String password = passwordController.text;
+      try {
+        if (await _itemMailExists(email)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Cet e-mail est déjà associé à un compte.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        } else if (await _itemNameExists(username)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Ce nom d\'utilisateur est déjà pris.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        } else {
+          await dbHelper.insertUser({
+            'username': username,
+            'mail': email,
+            'password': password,
+            'profile': _selectedImage != null ? _selectedImage!.path : '',
+          });
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => LoginPage()),
+          );
+        }
+      } catch (e) {
+        print('Error registering user: $e');
+        // Handle error appropriately
+      }
+    }
   }
 
   Future<bool> _itemMailExists(String email) async {
@@ -149,23 +179,67 @@ class _RegistrationPageState extends State<RegistrationPage> {
   }
 
   String? validateEmail(String? value) {
-    if (value == null || value.isEmpty || !value.contains('@') || !value.contains('.')) {
+    if (value == null ||
+        value.isEmpty ||
+        !value.contains('@') ||
+        !value.contains('.')) {
       return 'Veuillez entrer une adresse e-mail valide';
     }
     return null;
   }
 
   String? validateUsername(String? value) {
-    if (value == null || value.isEmpty || value.length < 3 || value.contains(' ')) {
+    if (value == null ||
+        value.isEmpty ||
+        value.length < 3 ||
+        value.contains(' ')) { // Vérifier la présence d'espaces
       return 'Le nom d\'utilisateur doit contenir au moins 3 caractères et ne doit pas contenir d\'espace';
     }
     return null;
   }
 
   String? validatePassword(String? value) {
-    if (value == null || value.isEmpty || value.length < 7) {
-      return 'Le mot de passe doit contenir au moins 7 caractères';
+    if (value == null ||
+        value.isEmpty ||
+        value.length < 7 ||
+        value.contains(' ')) { // Vérifier la présence d'espaces
+      return 'Le mot de passe doit contenir au moins 7 caractères et ne doit pas contenir d\'espace';
     }
     return null;
+  }
+
+  void _showImageSourceDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Choisir une source d\'image'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _pickImage(ImageSource.camera);
+            },
+            child: Text('Appareil photo'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _pickImage(ImageSource.gallery);
+            },
+            child: Text('Galerie'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _pickImage(ImageSource source) async {
+    final pickedImage = await _imagePicker.pickImage(source: source);
+
+    setState(() {
+      if (pickedImage != null) {
+        _selectedImage = File(pickedImage.path);
+      }
+    });
   }
 }

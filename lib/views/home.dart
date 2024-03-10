@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dating_app/views/login.dart';
 import 'package:dating_app/views/postPage.dart';
 import 'package:dating_app/views/userList.dart';
@@ -64,6 +66,7 @@ class HomePageContent extends StatefulWidget {
 
 class _HomePageContentState extends State<HomePageContent> {
   List<Map<String, dynamic>> friendLists = [];
+  List<Map<String, dynamic>> posts = [];
   late Timer _timer;
 
   @override
@@ -83,8 +86,10 @@ class _HomePageContentState extends State<HomePageContent> {
 
   Future<void> _loadData() async {
     final friendsLists = await dbHelper.getUsersWithMessages(user_id);
+    final loadedPosts = await dbHelper.getAllPosts();
     setState(() {
-      friendLists = friendsLists ?? []; // Assurez-vous que friendsLists n'est pas null
+      friendLists = friendsLists ?? [];
+      posts = loadedPosts ?? [];
     });
   }
 
@@ -148,8 +153,53 @@ class _HomePageContentState extends State<HomePageContent> {
             ),
 
             // Onglet 2
-            const Center(
-              child: Text("Contenu de l'onglet Post"),
+            ListView.builder(
+              itemCount: posts.length,
+              itemBuilder: (context, index) {
+                final Map<String, dynamic> post = posts[index];
+                return Padding(
+                  padding: const EdgeInsets.all(0.5),
+                  child: Stack(
+                    children: [
+                      // Image avec proportions d'origine
+                      Image.file(
+                        File(post['post']),
+                        fit: BoxFit.contain,
+                      ),
+                      // Coin supérieur droit : PopupMenuButton pour "supprimer"
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: PopupMenuButton(
+                          itemBuilder: (context) => [
+                            PopupMenuItem(
+                              child: Text('Supprimer'),
+                              value: 'delete',
+                            ),
+                          ],
+                          onSelected: (value) {
+                            if (value == 'delete') {
+                              // Logique pour supprimer l'image
+                            }
+                          },
+                        ),
+                      ),
+                      // Coin inférieur gauche : icône de "like" et nombre de likes
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        child: Row(
+                          children: [
+                            Icon(Icons.favorite, color: Colors.red),
+                            SizedBox(width: 4),
+                            Text('${post['likes']}'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -348,10 +398,53 @@ class _RequestsPageContentState extends State<RequestsPageContent> {
 }
 
 
-class AccountPageContent extends StatelessWidget {
+class AccountPageContent extends StatefulWidget {
   final String title;
 
   const AccountPageContent({Key? key, required this.title}) : super(key: key);
+
+  @override
+  _AccountPageContentState createState() => _AccountPageContentState();
+}
+
+class _AccountPageContentState extends State<AccountPageContent> {
+  int friendNumber = 0;
+  int postNumber = 0;
+  int signalNumber =0;
+  List<Map<String, dynamic>> posts = [];
+  late Timer _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      _refreshData();
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    final loadedFriendNumber = await dbHelper.getFriendCount(user_id);
+    final loadedPostNumber = await dbHelper.getPostCount(user_id);
+    final loadedSignalNumber = await dbHelper.getSignalCountForUser(user_id);
+    final loadedPosts = await dbHelper.getPostsByUser(user_id);
+    setState(() {
+      friendNumber = loadedFriendNumber;
+      postNumber = loadedPostNumber;
+      signalNumber = loadedSignalNumber;
+      posts = loadedPosts;
+    });
+  }
+
+  Future<void> _refreshData() async {
+    await _loadData();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -360,12 +453,12 @@ class AccountPageContent extends StatelessWidget {
         title: Text("${userInfo['username']}"),
         actions: [
           IconButton(onPressed: (){
-            /*Navigator.push(
+            Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => PostPage(),
               ),
-            );*/
+            );
           },
               icon: Icon(Icons.add_box)),
           IconButton(
@@ -416,22 +509,22 @@ class AccountPageContent extends StatelessWidget {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               CircleAvatar(
                 radius: 50,
-                //backgroundImage: AssetImage('assets/avatar.png'), // Remplacez 'assets/avatar.png' par le chemin de votre image
+                backgroundImage: FileImage(File(userInfo['profile'])),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Column(
                     children: [
                       Text(
-                        '109',
+                        "${friendNumber}",
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -451,7 +544,7 @@ class AccountPageContent extends StatelessWidget {
                   Column(
                     children: [
                       Text(
-                        '38',
+                        "${postNumber}",
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -465,16 +558,38 @@ class AccountPageContent extends StatelessWidget {
                           color: Colors.grey,
                         ),
                       ),
+
+                    ],
+                  ),
+                  SizedBox(width: 32),
+                  Column(
+                    children: [
+                      Text(
+                        '${signalNumber}',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Signalé',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+
                     ],
                   ),
                 ],
               ),
-              SizedBox(height: 32),
+              const SizedBox(height: 32),
               DefaultTabController(
                 length: 2,
                 child: Column(
                   children: [
-                    TabBar(
+                    const TabBar(
                       tabs: [
                         Tab(
                           icon: Icon(Icons.image), // Utilisez l'icône d'image pour le premier onglet
@@ -484,29 +599,76 @@ class AccountPageContent extends StatelessWidget {
                         ),
                       ],
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Container(
-                      height: 200, // Hauteur de votre contenu de l'onglet
+                      height: MediaQuery.of(context).size.height - 300, // Hauteur de votre contenu de l'onglet
                       child: TabBarView(
                         children: [
                           // Contenu de l'onglet 1 (avec l'icône d'image)
-                          Placeholder(), // Remplacez Placeholder() par votre contenu
-                          // Contenu de l'onglet 2 (avec l'icône de sondage)
-                          Placeholder(), // Remplacez Placeholder() par votre contenu
+                          ListView.builder(
+                            itemCount: posts.length,
+                            itemBuilder: (context, index) {
+                              final Map<String, dynamic> post = posts[index];
+                              return Padding(
+                                padding: const EdgeInsets.all(0.5),
+                                child: Stack(
+                                  children: [
+                                    // Image avec proportions d'origine
+                                    Image.file(
+                                      File(post['post']),
+                                      fit: BoxFit.contain,
+                                    ),
+                                    // Coin supérieur droit : PopupMenuButton pour "supprimer"
+                                    Positioned(
+                                      top: 0,
+                                      right: 0,
+                                      child: PopupMenuButton(
+                                        itemBuilder: (context) => [
+                                          PopupMenuItem(
+                                            child: Text('Supprimer'),
+                                            value: 'delete',
+                                          ),
+                                        ],
+                                        onSelected: (value) {
+                                          if (value == 'delete') {
+                                            // Logique pour supprimer l'image
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                    // Coin inférieur gauche : icône de "like" et nombre de likes
+                                    Positioned(
+                                      bottom: 0,
+                                      left: 0,
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.favorite, color: Colors.red),
+                                          SizedBox(width: 4),
+                                          Text('${post['likes']}'),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                          //Onglet 2
+                          Scaffold()
                         ],
                       ),
                     ),
                   ],
                 ),
-              ),
+              )
+
             ],
           ),
         ),
       ),
-
-
     );
   }
+
   void _showLogoutAlertDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -549,3 +711,4 @@ class AccountPageContent extends StatelessWidget {
     );
   }
 }
+

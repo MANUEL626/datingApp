@@ -115,10 +115,5 @@ class _PostPageState extends State<PostPage> {
       ),
     );
 
-    // Réinitialise les champs du formulaire après l'enregistrement
-    _formKey.currentState!.reset();
-    setState(() {
-      _selectedImage = null;
-    });
   }
 }

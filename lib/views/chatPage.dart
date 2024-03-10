@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dating_app/var.dart';
 
+import 'home.dart';
+
 class ChatPage extends StatefulWidget {
   const ChatPage({required this.chat});
   final Map<String, dynamic> chat;
@@ -47,6 +49,81 @@ class _ChatPageState extends State<ChatPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text("${widget.chat['username']}"),
+        actions: [
+          PopupMenuButton(
+            itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+              const PopupMenuItem(
+                value: 'signal',
+                child: Text('Signal'),
+              ),
+              const PopupMenuItem(
+                value: 'quit_chat',
+                child: Text('Quit chat'),
+              ),
+              const PopupMenuItem(
+                value: 'view_profile',
+                child: Text('View profile'),
+              ),
+            ],
+            onSelected: (value) {
+              // Effectuer des actions spécifiques en fonction de l'option sélectionnée
+              switch (value) {
+                case 'signal':
+                  _showConfirmationDialog(
+                    context,
+                    'Signal',
+                    'Êtes-vous sûr de vouloir signaler?',
+                        () async {
+                      await dbHelper.removeFriendship(user_id, widget.chat['user_id']);
+                      await dbHelper.reportUser(user_id, widget.chat['user_id']);
+                      SnackBar(
+                        content: Text('Vous venez de signaler l\'utilisateur "${widget.chat['user_id']}"!'),
+                        duration: Duration(seconds: 2),
+                      );
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => HomePage()),
+                      );
+                    },
+                  );
+                  break;
+                case 'quit_chat':
+                  _showConfirmationDialog(
+                    context,
+                    'Quit chat',
+                    'Êtes-vous sûr de vouloir quitter le chat?',
+                        () async {
+                          await dbHelper.removeFriendship(user_id, widget.chat['user_id']);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Vous venez de quitter le chat de "${widget.chat['user_id']}"!'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => HomePage()),
+                          );
+                        }, // Action pour quitter le chat
+                  );
+                  break;
+                case 'view_profile':
+                  _showConfirmationDialog(
+                    context,
+                    'View profile',
+                    'Êtes-vous sûr de vouloir voir le profil?',
+                    (){}, // Fonction à exécuter si l'utilisateur confirme
+                  );
+                  break;
+                default:
+                  break;
+              }
+            },
+            icon: Icon(Icons.more_vert),
+          ),
+        ],
+
       ),
       body: Column(
         children: [
@@ -180,5 +257,38 @@ class _ChatPageState extends State<ChatPage> {
       _messageController.clear();
       _refreshData();
     }
+  }
+
+// Fonction pour afficher une alerte de confirmation
+  void _showConfirmationDialog(
+      BuildContext context,
+      String title,
+      String content,
+      Function() onConfirm,
+      ) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirmation'),
+          content: Text(content),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                onConfirm(); // Exécutez la fonction onConfirm si l'utilisateur confirme
+              },
+              child: Text('Confirmer'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

@@ -16,7 +16,7 @@ class DatabaseHelper {
 
   Future<Database> _initDatabase() async {
     final String dbPath = await getDatabasesPath();
-    final String path = join(dbPath, 'my_base2.db');
+    final String path = join(dbPath, 'my_base3.db');
 
     return await openDatabase(
       path,
@@ -27,7 +27,18 @@ class DatabaseHelper {
             user_id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT,
             password TEXT,
+            profile TEXT,
             mail TEXT
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS signal (
+            signal_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            reporter_user_id INTEGER,
+            reported_user_id INTEGER,
+            report_count INTEGER DEFAULT 0,
+            FOREIGN KEY (reporter_user_id) REFERENCES user(user_id),
+            FOREIGN KEY (reported_user_id) REFERENCES user(user_id)
           )
         ''');
         await db.execute('''
@@ -66,7 +77,7 @@ class DatabaseHelper {
             post_id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
             post TEXT,
-            FOREIGN KEY (user_id) REFERENCES user (user_id),
+            FOREIGN KEY (user_id) REFERENCES user (user_id)
           )
         ''');
       },
@@ -78,6 +89,38 @@ class DatabaseHelper {
     final db = await database;
     await db.insert('user', userData);
   }
+
+  //signalisation
+  Future<void> reportUser(int reporterUserId, int reportedUserId) async {
+    final db = await database;
+
+    // Vérifier si l'utilisateur a déjà été signalé par le même utilisateur
+    final List<Map<String, dynamic>> existingReport = await db.query('signal',
+        where: 'reporter_user_id = ? AND reported_user_id = ?',
+        whereArgs: [reporterUserId, reportedUserId]);
+
+    if (existingReport.isNotEmpty) {
+      // L'utilisateur a déjà été signalé par le même utilisateur, aucune action supplémentaire n'est nécessaire
+      return;
+    }
+
+    // Insérer un nouveau signalement dans la table des signalements
+    await db.insert('signal', {
+      'reporter_user_id': reporterUserId,
+      'reported_user_id': reportedUserId,
+    });
+
+    // Compter le nombre total de signalements pour cet utilisateur
+    final int totalReports = await db.rawQuery(
+        'SELECT COUNT(*) FROM signal WHERE reported_user_id = ?',
+        [reportedUserId]).then((value) => Sqflite.firstIntValue(value) ?? 0);
+
+    // Si le nombre total de signalements atteint 4, supprimer le compte de l'utilisateur
+    if (totalReports >= 5) {
+      await db.delete('user', where: 'user_id = ?', whereArgs: [reportedUserId]);
+    }
+  }
+
 
   //Ajout d'un post
   Future<void> insertPost(Map<String, dynamic> postData) async {
@@ -263,6 +306,7 @@ class DatabaseHelper {
   ''', [userId, userId, userId]); // Exclure l'utilisateur lui-même
   }
 
+// Récupérer la liste des utilisateurs avec qui l'utilisateur donné a échangé des messages et qui sont également ses amis
   Future<List<Map<String, dynamic>>> getUsersWithMessages(int userId) async {
     final db = await database;
     return db.rawQuery('''
@@ -270,11 +314,20 @@ class DatabaseHelper {
     FROM user
     INNER JOIN message ON user.user_id = message.sender_id OR user.user_id = message.receiver_id
     WHERE (message.sender_id = ? OR message.receiver_id = ?)
+      AND user.user_id IN (
+        SELECT CASE 
+          WHEN friend.user1_id = ? THEN friend.user2_id
+          ELSE friend.user1_id
+        END AS friend_id
+        FROM friend
+        WHERE friend.user1_id = ? OR friend.user2_id = ?
+      )
       AND user.user_id != ?
     GROUP BY user.user_id
     ORDER BY last_message_timestamp DESC
-  ''', [userId, userId, userId]);
+  ''', [userId, userId, userId, userId, userId, userId]);
   }
+
 
 
   //uttilisateur connecté
@@ -282,6 +335,62 @@ class DatabaseHelper {
     final db = await database;
     List<Map<String, dynamic>> users = await db.query('user', where: 'user_id = ?', whereArgs: [userId], limit: 1);
     return users.isNotEmpty ? users.first : null;
+  }
+
+  // Supprimer l'amitié entre deux utilisateurs
+  Future<void> removeFriendship(int user1Id, int user2Id) async {
+    final db = await database;
+    await db.delete(
+      'friend',
+      where: '(user1_id = ? AND user2_id = ?) OR (user1_id = ? AND user2_id = ?)',
+      whereArgs: [user1Id, user2Id, user2Id, user1Id],
+    );
+  }
+
+  // Fonction pour obtenir le nombre d'amis d'un utilisateur
+  Future<int> getFriendCount(int userId) async {
+    final db = await database;
+    final List<Map<String, dynamic>> result = await db.rawQuery('''
+    SELECT COUNT(*) AS friend_count
+    FROM friend
+    WHERE user1_id = ? OR user2_id = ?
+  ''', [userId, userId]);
+    final int friendCount = Sqflite.firstIntValue(result) ?? 0;
+    return friendCount;
+  }
+
+  // Fonction pour obtenir le nombre de publications effectuées par un utilisateur
+  Future<int> getPostCount(int userId) async {
+    final db = await database;
+    final List<Map<String, dynamic>> result = await db.rawQuery('''
+    SELECT COUNT(*) AS post_count
+    FROM post
+    WHERE user_id = ?
+  ''', [userId]);
+    final int postCount = Sqflite.firstIntValue(result) ?? 0;
+    return postCount;
+  }
+
+  // Fonction pour obtenir le nombre de signalisation
+  Future<int> getSignalCountForUser(int userId) async {
+    final db = await database;
+    final List<Map<String, dynamic>> result = await db.rawQuery('''
+    SELECT COUNT(*) AS signal_count
+    FROM signal
+    WHERE reported_user_id = ?
+  ''', [userId]);
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  //Recuperer les postes
+  Future<List<Map<String, dynamic>>> getAllPosts() async {
+    final db = await database;
+    return db.query('post');
+  }
+
+  Future<List<Map<String, dynamic>>> getPostsByUser(int userId) async {
+    final db = await database;
+    return db.query('post', where: 'user_id = ?', whereArgs: [userId]);
   }
 
 }
