@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:dating_app/views/infoUser.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dating_app/var.dart';
@@ -48,7 +50,31 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("${widget.chat['username']}"),
+        title: GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => InfoPage(user: widget.chat),
+              ),
+            );
+          },
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundImage: FileImage(File(widget.chat['profile'] ?? '')),
+              ),
+              const SizedBox(width: 10.0),
+              Expanded(
+                child: Text(
+                  widget.chat['username'],
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ),
+            ],
+          ),
+        ),
         actions: [
           PopupMenuButton(
             itemBuilder: (BuildContext context) => <PopupMenuEntry>[
@@ -93,19 +119,19 @@ class _ChatPageState extends State<ChatPage> {
                     'Quit chat',
                     'Êtes-vous sûr de vouloir quitter le chat?',
                         () async {
-                          await dbHelper.removeFriendship(user_id, widget.chat['user_id']);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Vous venez de quitter le chat de "${widget.chat['user_id']}"!'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
+                      await dbHelper.removeFriendship(user_id, widget.chat['user_id']);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Vous venez de quitter le chat de "${widget.chat['user_id']}"!'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
 
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => HomePage()),
-                          );
-                        }, // Action pour quitter le chat
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => HomePage()),
+                      );
+                    }, // Action pour quitter le chat
                   );
                   break;
                 case 'view_profile':
@@ -113,7 +139,7 @@ class _ChatPageState extends State<ChatPage> {
                     context,
                     'View profile',
                     'Êtes-vous sûr de vouloir voir le profil?',
-                    (){}, // Fonction à exécuter si l'utilisateur confirme
+                        (){}, // Fonction à exécuter si l'utilisateur confirme
                   );
                   break;
                 default:
@@ -123,7 +149,6 @@ class _ChatPageState extends State<ChatPage> {
             icon: Icon(Icons.more_vert),
           ),
         ],
-
       ),
       body: Column(
         children: [
@@ -205,6 +230,9 @@ class _ChatPageState extends State<ChatPage> {
               }
             },
             child: Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width-100,
+              ),
               decoration: BoxDecoration(
                 color: isCurrentUser ? Colors.blue : Colors.grey,
                 borderRadius: BorderRadius.circular(8.0),
@@ -214,6 +242,7 @@ class _ChatPageState extends State<ChatPage> {
               child: Text(
                 message['message'] ?? '',
                 style: TextStyle(color: Colors.white),
+                softWrap: true,
               ),
             ),
           ),

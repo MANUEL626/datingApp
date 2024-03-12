@@ -197,7 +197,7 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getSentFriendRequests(int userId) async {
     final db = await database;
     return db.rawQuery('''
-    SELECT friend_request.*, user.username AS receiver_username
+    SELECT friend_request.*, user.username AS receiver_username, user.profile AS receiver_profile
     FROM friend_request
     INNER JOIN user ON friend_request.receiver_id = user.user_id
     WHERE friend_request.sender_id = ?
@@ -208,7 +208,7 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getReceivedFriendRequests(int userId) async {
     final db = await database;
     return db.rawQuery('''
-    SELECT friend_request.*, user.username AS sender_username
+    SELECT friend_request.*, user.username AS sender_username, user.profile AS sender_profile
     FROM friend_request
     INNER JOIN user ON friend_request.sender_id = user.user_id
     WHERE friend_request.receiver_id = ?

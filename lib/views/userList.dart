@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import '../var.dart';
 
@@ -44,7 +46,10 @@ class _UserListState extends State<UserList> {
             return Padding(
               padding: const EdgeInsets.all(0.5),
               child: ListTile(
-                leading: CircleAvatar(),
+                leading: CircleAvatar(
+                  radius: 30,
+                  backgroundImage: FileImage(File(user['profile']??'')),
+                ),
                 title: Text(user['username']),
                 onTap: () async {
                   final existingRequest = await dbHelper.getFriendRequest(user_id, user['user_id']);

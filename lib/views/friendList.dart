@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../var.dart';
 import 'chatPage.dart';
@@ -57,7 +58,7 @@ class _FriendListState extends State<FriendList> {
               child: ListTile(
                 leading: CircleAvatar(
                   radius: 30,
-                  // Insérer ici la logique pour afficher l'avatar de l'utilisateur
+                  backgroundImage: FileImage(File(friend['profile']?? '')),
                 ),
                 title: Text(friend['username'] ?? ''),
                 onTap: () {

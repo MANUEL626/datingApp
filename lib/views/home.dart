@@ -36,18 +36,18 @@ class _HomePageState extends State<HomePage> {
             _currentIndex = index;
           });
         },
-        items: const [
-          BottomNavigationBarItem(
+        items:[
+          const BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Home',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.person_add_alt_1_rounded),
             label: 'Request',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
+            icon: ImageIcon(FileImage(File(userInfo['profile'] ?? ''))) ,//ImageIcon(AssetImage(userInfo['profile']?? '')),
+            label: 'Me',
           ),
         ],
       ),
@@ -140,7 +140,7 @@ class _HomePageContentState extends State<HomePageContent> {
                     child: ListTile(
                       leading: CircleAvatar(
                         radius: 30,
-                        // Insérer ici la logique pour afficher l'avatar de l'utilisateur
+                        backgroundImage: FileImage(File(friend['profile'])),
                       ),
                       title: Text(friend['username'] ?? ''),
                       onTap: () {
@@ -292,7 +292,10 @@ class _RequestsPageContentState extends State<RequestsPageContent> {
                     return Padding(
                       padding: const EdgeInsets.all(0.5),
                       child: ListTile(
-                        leading: CircleAvatar(),
+                        leading: CircleAvatar(
+                          radius: 30,
+                          backgroundImage: FileImage(File(item['sender_profile']?? '')),
+                        ),
                         title: Text(item['sender_username'] ?? ''),
                         onTap: () async {
                           final confirmed = await showDialog<bool>(
@@ -348,7 +351,10 @@ class _RequestsPageContentState extends State<RequestsPageContent> {
                     return Padding(
                       padding: const EdgeInsets.all(0.5),
                       child: ListTile(
-                        leading: CircleAvatar(),
+                        leading: CircleAvatar(
+                          radius: 30,
+                          backgroundImage: FileImage(File(item['receiver_profile'] ?? '')),
+                        ),
                         title: Text(item['receiver_username'] ?? ''),
                         onTap: () async {
                           final confirmed = await showDialog<bool>(
@@ -434,16 +440,22 @@ class _AccountPageContentState extends State<AccountPageContent> {
     final loadedPostNumber = await dbHelper.getPostCount(user_id);
     final loadedSignalNumber = await dbHelper.getSignalCountForUser(user_id);
     final loadedPosts = await dbHelper.getPostsByUser(user_id);
-    setState(() {
-      friendNumber = loadedFriendNumber;
-      postNumber = loadedPostNumber;
-      signalNumber = loadedSignalNumber;
-      posts = loadedPosts;
-    });
+    if (mounted) {
+      setState(() {
+        friendNumber = loadedFriendNumber;
+        postNumber = loadedPostNumber;
+        signalNumber = loadedSignalNumber;
+        posts = loadedPosts;
+      });
+    }
+
   }
 
   Future<void> _refreshData() async {
-    await _loadData();
+    if (mounted) {
+      await _loadData();
+    }
+
   }
 
   @override
@@ -540,7 +552,7 @@ class _AccountPageContentState extends State<AccountPageContent> {
                       ),
                     ],
                   ),
-                  SizedBox(width: 32),
+                  const SizedBox(width: 32),
                   Column(
                     children: [
                       Text(
@@ -550,8 +562,8 @@ class _AccountPageContentState extends State<AccountPageContent> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 4),
-                      Text(
+                      const SizedBox(height: 4),
+                      const Text(
                         'Posts',
                         style: TextStyle(
                           fontSize: 12,
