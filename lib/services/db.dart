@@ -393,4 +393,46 @@ class DatabaseHelper {
     return db.query('post', where: 'user_id = ?', whereArgs: [userId]);
   }
 
+  //modification
+  Future<void> updateUserUsername(int id, String username) async {
+    final db = await database;
+    await db.update(
+      'user',
+      {'username': username},
+      where: 'user_id = ?',
+      whereArgs: [id],
+    );
+  }
+
+
+  Future<void> updateUserMail(int id, String mail) async {
+    final db = await database;
+    await db.update(
+      'user',
+      {'mail': mail},
+      where: 'user_id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> updateUserPassword(int id, String password) async {
+    final db = await database;
+    await db.update(
+      'user',
+      {'password': password},
+      where: 'user_id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> updateUserProfile(int id, String profile) async {
+    final db = await database;
+    await db.update(
+      'user',
+      {'mail': profile},
+      where: 'user_id = ?',
+      whereArgs: [id],
+    );
+  }
+
 }

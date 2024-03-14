@@ -14,8 +14,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-  TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
 
   final ImagePicker _imagePicker = ImagePicker();
   File? _selectedImage;

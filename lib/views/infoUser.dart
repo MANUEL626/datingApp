@@ -51,7 +51,27 @@ class InfoPage extends StatelessWidget {
                   ),
                   const  SizedBox(width: 32),
                   IconButton(
-                      onPressed: (){},
+                      onPressed: (){
+                        _showConfirmationDialog(
+                          context,
+                          'Quit chat',
+                          'Êtes-vous sûr de vouloir quitter le chat?',
+                              () async {
+                            await dbHelper.removeFriendship(user_id, user['user_id']);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Vous venez de quitter le chat de "${user['user_id']}"!'),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (context) => const HomePage()),
+                            );
+                          }, // Action pour quitter le chat
+                        );
+                      },
                       icon: const Icon(Icons.output),
                     color: Colors.red,
 
@@ -59,7 +79,25 @@ class InfoPage extends StatelessWidget {
                   ),
                   const  SizedBox(width: 32),
                   IconButton(
-                      onPressed: (){},
+                      onPressed: (){
+                        _showConfirmationDialog(
+                          context,
+                          'Signal',
+                          'Êtes-vous sûr de vouloir signaler?',
+                              () async {
+                            await dbHelper.removeFriendship(user_id, user['user_id']);
+                            await dbHelper.reportUser(user_id, user['user_id']);
+                            SnackBar(
+                              content: Text('Vous venez de signaler l\'utilisateur "${user['user_id']}"!'),
+                              duration: Duration(seconds: 2),
+                            );
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (context) => HomePage()),
+                            );
+                          },
+                        );
+                      },
                       icon: const Icon(Icons.block),
                       color: Colors.red,
                   ),
@@ -70,6 +108,38 @@ class InfoPage extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+  // Fonction pour afficher une alerte de confirmation
+  void _showConfirmationDialog(
+      BuildContext context,
+      String title,
+      String content,
+      Function() onConfirm,
+      ) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirmation'),
+          content: Text(content),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                onConfirm(); // Exécutez la fonction onConfirm si l'utilisateur confirme
+              },
+              child: Text('Confirmer'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

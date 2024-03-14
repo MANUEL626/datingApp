@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dating_app/views/login.dart';
 import 'package:dating_app/views/postPage.dart';
 import 'package:dating_app/views/userList.dart';
+import 'package:dating_app/views/userProfile.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../var.dart';
@@ -46,7 +47,9 @@ class _HomePageState extends State<HomePage> {
             label: 'Request',
           ),
           BottomNavigationBarItem(
-            icon: ImageIcon(FileImage(File(userInfo['profile'] ?? ''))) ,//ImageIcon(AssetImage(userInfo['profile']?? '')),
+            icon: CircleAvatar(
+              backgroundImage: FileImage(File(userInfo['profile'] ?? '',),
+            ),),//ImageIcon(AssetImage(userInfo['profile']?? '')),
             label: 'Me',
           ),
         ],
@@ -468,11 +471,11 @@ class _AccountPageContentState extends State<AccountPageContent> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => PostPage(),
+                builder: (context) => const PostPage(),
               ),
             );
           },
-              icon: Icon(Icons.add_box)),
+              icon: const Icon(Icons.add_box)),
           IconButton(
             onPressed: () {
               showModalBottomSheet(
@@ -483,28 +486,32 @@ class _AccountPageContentState extends State<AccountPageContent> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         ListTile(
-                          title: Text('Profile'),
+                          title: const Text('Profile'),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const UserProfilePage(),
+                              ),
+                            );
+                          },
+                        ),
+                        ListTile(
+                          title: const Text('Paramètres'),
                           onTap: () {
                             // Action à effectuer lorsque l'élément est cliqué
                             Navigator.pop(context); // Ferme le BottomSheet
                           },
                         ),
                         ListTile(
-                          title: Text('Paramètres'),
+                          title: const Text('Politique de confidentialité'),
                           onTap: () {
                             // Action à effectuer lorsque l'élément est cliqué
                             Navigator.pop(context); // Ferme le BottomSheet
                           },
                         ),
                         ListTile(
-                          title: Text('Politique de confidentialité'),
-                          onTap: () {
-                            // Action à effectuer lorsque l'élément est cliqué
-                            Navigator.pop(context); // Ferme le BottomSheet
-                          },
-                        ),
-                        ListTile(
-                          title: Text('Se déconnecter'),
+                          title: const Text('Se déconnecter'),
                           onTap: () {
                             _showLogoutAlertDialog(context);
                           },
@@ -536,14 +543,14 @@ class _AccountPageContentState extends State<AccountPageContent> {
                   Column(
                     children: [
                       Text(
-                        "${friendNumber}",
-                        style: TextStyle(
+                        "$friendNumber",
+                        style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 4),
-                      Text(
+                      const SizedBox(height: 4),
+                      const Text(
                         'Amis',
                         style: TextStyle(
                           fontSize: 12,
@@ -556,8 +563,8 @@ class _AccountPageContentState extends State<AccountPageContent> {
                   Column(
                     children: [
                       Text(
-                        "${postNumber}",
-                        style: TextStyle(
+                        "$postNumber",
+                        style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
@@ -573,18 +580,18 @@ class _AccountPageContentState extends State<AccountPageContent> {
 
                     ],
                   ),
-                  SizedBox(width: 32),
+                  const SizedBox(width: 32),
                   Column(
                     children: [
                       Text(
-                        '${signalNumber}',
-                        style: TextStyle(
+                        '$signalNumber',
+                        style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 4),
-                      Text(
+                      const SizedBox(height: 4),
+                      const Text(
                         'Signalé',
                         style: TextStyle(
                           fontSize: 12,
@@ -604,10 +611,10 @@ class _AccountPageContentState extends State<AccountPageContent> {
                     const TabBar(
                       tabs: [
                         Tab(
-                          icon: Icon(Icons.image), // Utilisez l'icône d'image pour le premier onglet
+                          icon: Icon(Icons.image),
                         ),
                         Tab(
-                          icon: Icon(Icons.poll), // Utilisez l'icône de sondage pour le deuxième onglet
+                          icon: Icon(Icons.poll),
                         ),
                       ],
                     ),
@@ -708,14 +715,14 @@ class _AccountPageContentState extends State<AccountPageContent> {
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => LoginPage()),
-                      (Route<dynamic> route) => false, // Remove all previous routes
+                      (Route<dynamic> route) => false,
                 );
               },
-              child: Text('Déconnexion'),
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.white, backgroundColor: Colors.red,
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
+              child: const Text('Déconnexion'),
             ),
           ],
         );

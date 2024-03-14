@@ -11,7 +11,6 @@ class PostPage extends StatefulWidget {
 }
 
 class _PostPageState extends State<PostPage> {
-  final _formKey = GlobalKey<FormState>();
   final ImagePicker _imagePicker = ImagePicker();
   File? _selectedImage;
   String text = '';
@@ -21,14 +20,14 @@ class _PostPageState extends State<PostPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('POST'),
+        title: const Text('POST'),
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
             ElevatedButton(
               onPressed: _showImageSourceDialog,
-              child: Text('Sélectionner une image'),
+              child: const Text('Sélectionner une image'),
             ),
             _selectedImage != null
                 ? Image.file(_selectedImage!)
@@ -43,7 +42,7 @@ class _PostPageState extends State<PostPage> {
             ),
             ElevatedButton(
               onPressed: _submitForm,
-              child: Text('Enregistrer'),
+              child: const Text('Enregistrer'),
             ),
           ],
         ),
@@ -92,7 +91,7 @@ class _PostPageState extends State<PostPage> {
         text = 'Veuillez choisir une image';
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Veuillez choisir une image.'),
           duration: Duration(seconds: 2),
         ),
@@ -104,16 +103,17 @@ class _PostPageState extends State<PostPage> {
         'user_id' : user_id,
         'post' : _selectedImage != null ? _selectedImage!.path : '',
       };
-    }
-    await dbHelper.insertPost(post);
-    Navigator.pop(context);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Élément enregistré avec succès!'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+      await dbHelper.insertPost(post);
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Élément enregistré avec succès!'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
 
   }
 }
