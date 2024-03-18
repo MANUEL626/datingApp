@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../var.dart';
+import 'forgottenMail.dart';
 import 'home.dart';
 import 'register.dart';
 
 class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
   @override
   _LoginPageState createState() => _LoginPageState();
 }
@@ -20,7 +23,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Connexion'),
+        title: const Text('Connexion'),
       ),
       body: SingleChildScrollView( // Utilise un SingleChildScrollView
         child: Padding(
@@ -31,7 +34,7 @@ class _LoginPageState extends State<LoginPage> {
             children: [
               TextField(
                 controller: usernameController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Nom d\'utilisateur',
                 ),
                 inputFormatters: [
@@ -42,14 +45,14 @@ class _LoginPageState extends State<LoginPage> {
               TextField(
                 controller: passwordController,
                 obscureText: true,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Mot de passe',
                 ),
                 inputFormatters: [
                   FilteringTextInputFormatter.deny(RegExp(r'\s')), // Exclure les espaces
                 ],
               ),
-              SizedBox(height: 16.0),
+              const SizedBox(height: 16.0),
               ElevatedButton(
                 onPressed: () async {
                   // Ajoutez votre logique de connexion ici
@@ -66,7 +69,8 @@ class _LoginPageState extends State<LoginPage> {
                       context,
                       MaterialPageRoute(builder: (context) => HomePage()),
                     );
-                  } else {
+                  }
+                  else {
                     showDialog(
                       context: context,
                       builder: (BuildContext context) {
@@ -78,7 +82,7 @@ class _LoginPageState extends State<LoginPage> {
                               onPressed: () {
                                 Navigator.of(context).pop();
                               },
-                              child: Text(
+                              child: const Text(
                                 'OK',
                                 style: TextStyle(),
                                 textAlign: TextAlign.center,
@@ -90,9 +94,9 @@ class _LoginPageState extends State<LoginPage> {
                     );
                   }
                 },
-                child: Text('Se connecter'),
+                child: const Text('Se connecter'),
               ),
-              SizedBox(height: 16.0),
+              const SizedBox(height: 16.0),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -105,18 +109,18 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       );
                     },
-                    child: Text('S\'inscrire'),
+                    child: const Text('S\'inscrire'),
                   ),
                   TextButton(
                     onPressed: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => OtherPage(),
+                          builder: (context) => const ForgottenMail(),
                         ),
                       );
                     },
-                    child: Text('Autre Page'),
+                    child: const Text('E-mail oublié'),
                   ),
                 ],
               ),
@@ -132,7 +136,6 @@ class _LoginPageState extends State<LoginPage> {
     final user = await dbHelper.getUser(username);
     if (user != null && user.isNotEmpty) {
       if (user[0]['password'] == password) {
-        print('User  $user');
         user_id = user[0]['user_id'];
         userInfo = user[0];
         return true;
@@ -142,16 +145,3 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
-class OtherPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Autre Page'),
-      ),
-      body: Center(
-        child: Text('Contenu de l\'autre page'),
-      ),
-    );
-  }
-}

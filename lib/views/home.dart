@@ -67,10 +67,15 @@ class HomePageContent extends StatefulWidget {
   _HomePageContentState createState() => _HomePageContentState();
 }
 
+
+
 class _HomePageContentState extends State<HomePageContent> {
   List<Map<String, dynamic>> friendLists = [];
   List<Map<String, dynamic>> posts = [];
   late Timer _timer;
+  TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
+  List<Map<String, dynamic>> filteredFriends = [];
 
   @override
   void initState() {
@@ -100,17 +105,50 @@ class _HomePageContentState extends State<HomePageContent> {
     await _loadData();
   }
 
+  void _startSearch() {
+    setState(() {
+      _isSearching = true;
+    });
+  }
+
+  void _stopSearch() {
+    setState(() {
+      _isSearching = false;
+      _searchController.clear();
+      filteredFriends.clear();
+    });
+  }
+
+  void _filterFriends(String keyword) {
+    setState(() {
+      filteredFriends = friendLists
+          .where((friend) =>
+      friend['username'] != null &&
+          friend['username'].toLowerCase().contains(keyword.toLowerCase()))
+          .toList();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.title),
+          title: _isSearching
+              ? TextField(
+            controller: _searchController,
+            decoration: const InputDecoration(
+              hintText: 'Search...',
+              border: InputBorder.none,
+            ),
+            onChanged: _filterFriends,
+          )
+              : Text(widget.title),
           actions: [
             IconButton(
-              onPressed: () {},
-              icon: const Icon(Icons.search),
+              onPressed: _isSearching ? _stopSearch : _startSearch,
+              icon: Icon(_isSearching ? Icons.close : Icons.search),
             ),
             IconButton(
               onPressed: () {
@@ -119,10 +157,10 @@ class _HomePageContentState extends State<HomePageContent> {
                   MaterialPageRoute(builder: (context) => FriendList()),
                 );
               },
-              icon: const Icon(Icons.message),
+              icon: Icon(Icons.message),
             )
           ],
-          bottom: const TabBar(
+          bottom: TabBar(
             tabs: [
               Tab(text: "Chats"),
               Tab(text: "Post"),
@@ -135,9 +173,9 @@ class _HomePageContentState extends State<HomePageContent> {
             RefreshIndicator(
               onRefresh: _handleRefresh,
               child: ListView.builder(
-                itemCount: friendLists.length,
+                itemCount: _isSearching ? filteredFriends.length : friendLists.length,
                 itemBuilder: (context, index) {
-                  final Map<String, dynamic> friend = friendLists[index];
+                  final Map<String, dynamic> friend = _isSearching ? filteredFriends[index] : friendLists[index];
                   return Padding(
                     padding: const EdgeInsets.all(0.5),
                     child: ListTile(
@@ -223,6 +261,7 @@ class _HomePageContentState extends State<HomePageContent> {
     );
   }
 }
+
 
 
 class RequestsPageContent extends StatefulWidget {
@@ -443,12 +482,15 @@ class _AccountPageContentState extends State<AccountPageContent> {
     final loadedPostNumber = await dbHelper.getPostCount(user_id);
     final loadedSignalNumber = await dbHelper.getSignalCountForUser(user_id);
     final loadedPosts = await dbHelper.getPostsByUser(user_id);
+    final loadedUserInfo = await dbHelper.getUserWithId(user_id);
+
     if (mounted) {
       setState(() {
         friendNumber = loadedFriendNumber;
         postNumber = loadedPostNumber;
         signalNumber = loadedSignalNumber;
         posts = loadedPosts;
+        userInfo = loadedUserInfo[0];
       });
     }
 

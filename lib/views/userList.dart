@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import '../var.dart';
+import 'profilePage.dart';
 
 class UserList extends StatefulWidget {
   const UserList({Key? key});
@@ -12,6 +13,9 @@ class UserList extends StatefulWidget {
 
 class _UserListState extends State<UserList> {
   List<Map<String, dynamic>> userList = [];
+  TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
+  List<Map<String, dynamic>> filteredFriends = [];
 
   @override
   void initState() {
@@ -31,18 +35,57 @@ class _UserListState extends State<UserList> {
     await _loadData();
   }
 
+  void _startSearch() {
+    setState(() {
+      _isSearching = true;
+    });
+  }
+
+  void _stopSearch() {
+    setState(() {
+      _isSearching = false;
+      _searchController.clear();
+      filteredFriends.clear();
+    });
+  }
+
+  void _filterFriends(String keyword) {
+    setState(() {
+      filteredFriends = userList
+          .where((friend) =>
+      friend['username'] != null &&
+          friend['username'].toLowerCase().contains(keyword.toLowerCase()))
+          .toList();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Users"),
+        title: _isSearching
+            ? TextField(
+          controller: _searchController,
+          decoration: const InputDecoration(
+            hintText: 'Search...',
+            border: InputBorder.none,
+          ),
+          onChanged: _filterFriends,
+        )
+            :const Text("Users"),
+        actions: [
+          IconButton(
+            onPressed: _isSearching ? _stopSearch : _startSearch,
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+          ),
+        ]
       ),
       body: RefreshIndicator(
         onRefresh: _refreshData,
         child: ListView.builder(
-          itemCount: userList.length,
+          itemCount: _isSearching ? filteredFriends.length : userList.length,
           itemBuilder: (context, index) {
-            final user = userList[index];
+            final user = _isSearching ? filteredFriends[index] : userList[index];
             return Padding(
               padding: const EdgeInsets.all(0.5),
               child: ListTile(
@@ -84,6 +127,17 @@ class _UserListState extends State<UserList> {
                     }
                   }
                 },
+                trailing: IconButton(
+                  icon: const Icon(Icons.info),
+                  onPressed: (){
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProfilePage(user: user),
+                      ),
+                    );
+                  },
+                ),
               ),
             );
           },

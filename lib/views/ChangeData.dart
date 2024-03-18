@@ -37,6 +37,7 @@ class UsernamePage extends StatelessWidget {
             const SizedBox(height: 16.0),
             ElevatedButton(
               onPressed: () async {
+                String? validationMessage = validateUsername(usernameController.text);
                 if (await _itemNameExists(usernameController.text)) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -44,7 +45,16 @@ class UsernamePage extends StatelessWidget {
                       duration: Duration(seconds: 2),
                     ),
                   );
-                } else{
+                }
+                else if(validationMessage != null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(validationMessage),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+                else{
                   dbHelper.updateUserUsername(user_id, usernameController.text);
 
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -53,6 +63,7 @@ class UsernamePage extends StatelessWidget {
                       duration: Duration(seconds: 2),
                     ),
                   );
+                  Navigator.pop(context);
                 }
               },
               child: const Text('Se connecter'),
@@ -79,10 +90,11 @@ class UsernamePage extends StatelessWidget {
   }
 }
 
-class EmailPage extends StatelessWidget {
-  EmailPage({super.key});
-  final TextEditingController emailController = TextEditingController();
 
+class EmailPage extends StatelessWidget {
+  EmailPage({Key? key}) : super(key: key);
+
+  final TextEditingController emailController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -91,50 +103,61 @@ class EmailPage extends StatelessWidget {
         title: const Text('Email'),
       ),
       body: SingleChildScrollView(
-          child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    TextField(
-                      controller: emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'E-mail',
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(
+                  labelText: 'E-mail',
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.deny(RegExp(r'\s')), // Exclure les espaces
+                ],
+              ),
+              const SizedBox(height: 16.0),
+              ElevatedButton(
+                onPressed: () async {
+                  String? validationMessage = validateEmail(emailController.text);
+                  if (await _itemMailExists(emailController.text)) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Cet e-mail est déjà associé à un compte.'),
+                        duration: Duration(seconds: 2),
                       ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.deny(RegExp(r'\s')), // Exclure les espaces
-                      ],
-                    ),
-                    const SizedBox(height: 16.0),
-                    ElevatedButton(
-                      onPressed: () async {
-                        if (await _itemMailExists(emailController.text)) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Cet e-mail est déjà associé à un compte.'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        } else{
-                          dbHelper.updateUserMail(user_id, emailController.text);
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('E-mail modifié avec succès!'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        }
-                      },
-                      child: const Text('Se connecter'),
-                    ),
-                  ]
-              )
-          )
+                    );
+                  }
+                  else if(validationMessage != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(validationMessage),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                  else {
+                    dbHelper.updateUserMail(user_id, emailController.text);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('E-mail modifié avec succès!'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text('Se connecter'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
+
   Future<bool> _itemMailExists(String email) async {
     final users = await dbHelper.getUsers();
     return users.any((item) => item['mail'] == email);
@@ -150,6 +173,7 @@ class EmailPage extends StatelessWidget {
     return null;
   }
 }
+
 
 class PasswordPage extends StatefulWidget {
   const PasswordPage({super.key});
@@ -169,76 +193,98 @@ class _PasswordPageState extends State<PasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Username'),
+        title: const Text('Mot de passe'),
       ),
       body: SingleChildScrollView(
-          child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    TextFormField(
-                      controller: passwordController,
-                      obscureText: !showPassword,
-                      decoration: InputDecoration(
-                        labelText: 'Mot de passe',
-                        suffixIcon: IconButton(
-                          icon: Icon(showPassword
-                              ? Icons.visibility
-                              : Icons.visibility_off),
-                          onPressed: () {
-                            setState(() {
-                              showPassword = !showPassword;
-                            });
-                          },
-                        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextFormField(
+                controller: passwordController,
+                obscureText: !showPassword,
+                decoration: InputDecoration(
+                  labelText: 'Mot de passe',
+                  suffixIcon: IconButton(
+                    icon: Icon(showPassword ? Icons.visibility : Icons.visibility_off),
+                    onPressed: () {
+                      setState(() {
+                        showPassword = !showPassword;
+                      });
+                    },
+                  ),
+                ),
+                validator: (value) => validatePassword(value),
+              ),
+              const SizedBox(height: 16.0),
+              TextFormField(
+                controller: confirmPasswordController,
+                obscureText: !showConfirmPassword,
+                decoration: InputDecoration(
+                  labelText: 'Confirmer le mot de passe',
+                  suffixIcon: IconButton(
+                    icon: Icon(showConfirmPassword ? Icons.visibility : Icons.visibility_off),
+                    onPressed: () {
+                      setState(() {
+                        showConfirmPassword = !showConfirmPassword;
+                      });
+                    },
+                  ),
+                ),
+                validator: (value) {
+                  if (value != passwordController.text) {
+                    return 'Les mots de passe ne correspondent pas';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16.0),
+              ElevatedButton(
+                onPressed: () async {
+                  if (_validateForm()) {
+                    dbHelper.updateUserPassword(user_id, passwordController.text);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Mot de passe modifié avec succès!'),
+                        duration: Duration(seconds: 2),
                       ),
-                      validator: (value) => validatePassword(value),
-                    ),
-                    SizedBox(height: 16.0),
-                    TextFormField(
-                      controller: confirmPasswordController,
-                      obscureText: !showConfirmPassword,
-                      decoration: InputDecoration(
-                        labelText: 'Confirmer le mot de passe',
-                        suffixIcon: IconButton(
-                          icon: Icon(showConfirmPassword
-                              ? Icons.visibility
-                              : Icons.visibility_off),
-                          onPressed: () {
-                            setState(() {
-                              showConfirmPassword = !showConfirmPassword;
-                            });
-                          },
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value != passwordController.text) {
-                          return 'Les mots de passe ne correspondent pas';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16.0),
-                    ElevatedButton(
-                      onPressed: () async {
-                        dbHelper.updateUserPassword(user_id, passwordController.text);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Mot de passe modifié avec succès!'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                      child: const Text('Se connecter'),
-                    ),
-                  ]
-              )
-          )
+                    );
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text('Se connecter'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
+
+  bool _validateForm() {
+    if (passwordController.text.isEmpty || confirmPasswordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veuillez remplir tous les champs'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return false;
+    } else if (passwordController.text != confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Les mots de passe ne correspondent pas'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return false;
+    } else {
+      return true;
+    }
+  }
+
   String? validatePassword(String? value) {
     if (value == null ||
         value.isEmpty ||

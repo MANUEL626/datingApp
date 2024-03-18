@@ -14,6 +14,9 @@ class FriendList extends StatefulWidget {
 class _FriendListState extends State<FriendList> {
   List<Map<String, dynamic>> friendLists = [];
   late Timer _timer;
+  TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
+  List<Map<String, dynamic>> filteredFriends = [];
 
   @override
   void initState() {
@@ -41,18 +44,57 @@ class _FriendListState extends State<FriendList> {
     await _loadData();
   }
 
+  void _startSearch() {
+    setState(() {
+      _isSearching = true;
+    });
+  }
+
+  void _stopSearch() {
+    setState(() {
+      _isSearching = false;
+      _searchController.clear();
+      filteredFriends.clear();
+    });
+  }
+
+  void _filterFriends(String keyword) {
+    setState(() {
+      filteredFriends = friendLists
+          .where((friend) =>
+      friend['username'] != null &&
+          friend['username'].toLowerCase().contains(keyword.toLowerCase()))
+          .toList();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Friends"),
+        title: _isSearching
+            ? TextField(
+          controller: _searchController,
+          decoration: const InputDecoration(
+            hintText: 'Search...',
+            border: InputBorder.none,
+          ),
+          onChanged: _filterFriends,
+        )
+            :const Text("Friends"),
+        actions: [
+          IconButton(
+            onPressed: _isSearching ? _stopSearch : _startSearch,
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: _handleRefresh,
         child: ListView.builder(
-          itemCount: friendLists.length,
+          itemCount: _isSearching ? filteredFriends.length : friendLists.length,
           itemBuilder: (context, index) {
-            final Map<String, dynamic> friend = friendLists[index];
+            final Map<String, dynamic> friend = _isSearching ? filteredFriends[index] : friendLists[index];
             return Padding(
               padding: const EdgeInsets.all(0.5),
               child: ListTile(

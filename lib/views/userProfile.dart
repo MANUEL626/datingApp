@@ -1,4 +1,5 @@
 
+import 'package:dating_app/views/ChangeData.dart';
 import 'package:flutter/material.dart';
 
 class UserProfilePage extends StatelessWidget {
@@ -19,7 +20,7 @@ class UserProfilePage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const UserProfilePage(),
+                    builder: (context) => const ChangeProfilePage(),
                   ),
                 );
               },
@@ -31,7 +32,7 @@ class UserProfilePage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const UserProfilePage(),
+                    builder: (context) => UsernamePage(),
                   ),
                 );
               },
@@ -43,7 +44,7 @@ class UserProfilePage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const UserProfilePage(),
+                    builder: (context) =>  EmailPage(),
                   ),
                 );
               },
@@ -55,7 +56,7 @@ class UserProfilePage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const UserProfilePage(),
+                    builder: (context) => const PasswordPage(),
                   ),
                 );
               },

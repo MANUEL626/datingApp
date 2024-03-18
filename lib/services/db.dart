@@ -221,6 +221,11 @@ class DatabaseHelper {
     return db.query('user', where: 'username =?', whereArgs: [username]);
   }
 
+  Future<List<Map<String, dynamic>>> getUserWithId(int id) async {
+    final db = await database;
+    return db.query('user', where: 'user_id =?', whereArgs: [id]);
+  }
+
   // Vérification par e-mail
   Future<List<Map<String, dynamic>>> getUserMail(String mail) async {
     final db = await database;
@@ -429,7 +434,7 @@ class DatabaseHelper {
     final db = await database;
     await db.update(
       'user',
-      {'mail': profile},
+      {'profile': profile},
       where: 'user_id = ?',
       whereArgs: [id],
     );

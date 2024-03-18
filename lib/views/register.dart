@@ -43,12 +43,12 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 TextFormField(
                   controller: emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Adresse e-mail',
                   ),
                   validator: (value) => validateEmail(value),
                 ),
-                SizedBox(height: 16.0),
+                const SizedBox(height: 16.0),
                 TextFormField(
                   controller: usernameController,
                   decoration: InputDecoration(
@@ -56,7 +56,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   ),
                   validator: (value) => validateUsername(value),
                 ),
-                SizedBox(height: 16.0),
+                const SizedBox(height: 16.0),
                 TextFormField(
                   controller: passwordController,
                   obscureText: !showPassword,
@@ -75,7 +75,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   ),
                   validator: (value) => validatePassword(value),
                 ),
-                SizedBox(height: 16.0),
+                const SizedBox(height: 16.0),
                 TextFormField(
                   controller: confirmPasswordController,
                   obscureText: !showConfirmPassword,
@@ -99,7 +99,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     return null;
                   },
                 ),
-                SizedBox(height: 16.0),
+                const SizedBox(height: 16.0),
                 ElevatedButton(
                   onPressed: _showImageSourceDialog,
                   child: Text('Sélectionner une image'),
@@ -115,10 +115,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     SizedBox(height: 10),
                   ],
                 ),
-                SizedBox(height: 16.0),
+                const SizedBox(height: 16.0),
                 ElevatedButton(
                   onPressed: _registerUser,
-                  child: Text('S\'inscrire'),
+                  child: const Text('S\'inscrire'),
                 ),
               ],
             ),
@@ -155,9 +155,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
             'password': password,
             'profile': _selectedImage != null ? _selectedImage!.path : '',
           });
-          Navigator.pushReplacement(
+          Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => LoginPage()),
+                (Route<dynamic> route) => false,
           );
         }
       } catch (e) {
